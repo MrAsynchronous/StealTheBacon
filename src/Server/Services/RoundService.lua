@@ -12,6 +12,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --//Classes
 local RoundClass
 
+--//Locals
+local Happened
+
 function RoundService:Start()
     wait(20)
 
@@ -42,18 +45,17 @@ function RoundService:Start()
             local winningTeam, otherTeam = self:StartRound()
 
             if (not winningTeam and not otherTeam) then
-                print("TIE!")
-            elseif (not winningTeam and otherTeam) then
+                Happened:FireAllClients("Draw!")
+            elseif (winningTeam and otherTeam) then
                 TeamScores[otherTeam] = TeamScores[otherTeam] + 0.5
 
-                print(otherTeam, "neautralized the other team!")
-            elseif (winningTeam) then
+            --    Happened:FireAllClients(winningTeam .. " has neutralized the " .. otherTeam .. "!")
+            elseif (winningTeam and not otherTeam) then
                 TeamScores[winningTeam] = TeamScores[winningTeam] + 1
 
-                print(winningTeam, "has won!")
+            --    Happened:FireAllClients(winningTeam .. " has won the round!")
             end
 
-            print("TeamA:" .. TeamScores.TeamA, "TeamB:" .. TeamScores.TeamB)
             ReplicatedStorage.TeamA.Value = TeamScores.TeamA
             ReplicatedStorage.TeamB.Value = TeamScores.TeamB
 
@@ -61,6 +63,9 @@ function RoundService:Start()
 
             self:RunIntermission()
         until (self:GameOver())
+
+        Happened:FireAllClients((TeamScores.TeamA > TeamScores.TeamB and "Apples" or "Bananas") .. " has won the game!")
+        self:RunIntermission()
 
         self:Destroy()
         self = nil
@@ -73,6 +78,9 @@ function RoundService:Init()
 
     --//Classes
     RoundClass = self.Modules.Classes.RoundClass
+
+    --//Locals
+    Happened = ReplicatedStorage.Happened
 end
 
 

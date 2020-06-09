@@ -22,6 +22,7 @@ local BaconModel
 
 local NumberPicked
 local SendNumber
+local Happened
 
 local MINIMUM_PLAYERS = 2
 local ROUND_TIME = 45
@@ -131,7 +132,7 @@ function RoundClass:StartRound()
         local playerTable = self.Players[player]
         self.BaconCollected = true
 
-        print(player.Name, "has collected the bacon!")
+        Happened:FireAllClients(player.Name .. " has collected the bacon!")
 
         --Position bacon on head of player
         self.Bacon.CFrame = character.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
@@ -151,7 +152,7 @@ function RoundClass:StartRound()
             if ((currentPosition - playerTable.IdlePosition.Position).magnitude <= 10) then
                 winningTeam = playerTable.Team
 
-                print(player.Name, "has won the round!")
+                Happened:FireAllClients(player.Name .. " has won the round!")
 
                 self:EndRound()
             end
@@ -165,11 +166,12 @@ function RoundClass:StartRound()
             if (not otherPlayer) then return end
             if (otherPlayer == player) then return end
             
-            print(otherPlayer.Name, "has tagged", player.Name)
+            Happened:FireAllClients(otherPlayer.Name .. " tagged " .. player.Name .. "!")
 
             --Kill player with Bacon
             character.Humanoid.Health = 0
-            otherTeam = self.Players[otherPlayer].Team
+            winningTeam = self.Players[otherPlayer].Team
+            otherTeam = self.Players[player].Team
 
             --End round
             self:EndRound()
@@ -220,6 +222,12 @@ end
 
 --//Called after self:Initialize.  Just to make sure all player are rady
 function RoundClass:RunIntermission()
+    for _, player in pairs(self.RawPlayers) do
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        character.PrimaryPart.Anchored = false
+    end
+
     for i=INTERMISSION_TIME, 1, -1 do
         ReplicatedStorage.Timer.Value = i
 
@@ -264,6 +272,7 @@ function RoundClass:Init()
     --//Locals
     NumberPicked = ReplicatedStorage.NumberPicked
     SendNumber = ReplicatedStorage.GiveNumber
+    Happened = ReplicatedStorage.Happened
 end
 
 

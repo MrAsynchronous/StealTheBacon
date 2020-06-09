@@ -13,6 +13,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --//Locals
 local NumberPicked
 local SendNumber
+local Happened
+
+local NotificationGui
 local NumberGui
 local PickedGui
 local CoreGui
@@ -29,6 +32,31 @@ function GuiController:Start()
     CoreGui = PlayerGui:WaitForChild("Core")
     NumberGui = CoreGui:WaitForChild("WhatsMyNumber")
     PickedGui = CoreGui:WaitForChild("NumberPicked")
+    NotificationGui = CoreGui:WaitForChild("Notification")
+
+    Happened.OnClientEvent:Connect(function(eventText)
+        local newNotif = NotificationGui.Template:Clone()
+        newNotif.Name = "Notification"
+        newNotif.Label.Text = eventText
+
+        --Move all other notification up
+        for _, notif in pairs(NotificationGui:GetChildren()) do
+            if (not notif:IsA("Frame")) then continue end
+
+            notif:TweenPosition(UDim2.new(notif.Position.X.Scale, 0, notif.Position.Y.Scale - (notif.Size.Y.Scale + 0.025), 0), "Out", "Quint", 0.25, true)
+        end
+
+        newNotif.Position = UDim2.new(1.5, 0, 1, 0)
+        newNotif.Parent = NotificationGui
+        newNotif.Visible = true
+        newNotif:TweenPosition(UDim2.new(0.5, 0, 1, 0), "Out", "Quint", 0.25, true)
+
+        coroutine.wrap(function()
+            wait(5)
+
+            newNotif:TweenPosition(UDim2.new(1.5, 0, newNotif.Position.Y.Scale, 0), "Out", "Quint", 0.25, true)
+        end)()
+    end)
 
     NumberPicked.OnClientEvent:Connect(function(number)
         if (ourNumber and ourNumber == number) then
@@ -91,6 +119,7 @@ end
 
 
 function GuiController:Init()
+    Happened = ReplicatedStorage.Happened
     SendNumber = ReplicatedStorage.GiveNumber
     NumberPicked = ReplicatedStorage.NumberPicked
 end
