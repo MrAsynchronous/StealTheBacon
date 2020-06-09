@@ -19,44 +19,62 @@ local MaidClass
 --//Locals
 local CenterPosition = Vector3.new(0, 0, 0)
 local BaconModel
+local SendNumber
 
 local MINIMUM_PLAYERS = 2
+local ROUND_TIME = 45
+local INTERMISSION_TIME = 10
 
 
 function RoundClass.new()
     local self = setmetatable({
         TeamA = {},
         TeamB = {},
-
         Players = {},
         RawPlayers = {},
-
-        PlayersInRound = {},
         NumbersCalled = {},
+        PlayersInRound = {},
+        
         RoundOver = false,
+        BaconCollected = false,
 
         _Maid = MaidClass.new()
     }, RoundClass)
-
-
 
     return self
 end
 
 
-function RoundClass:EndRound()
-    self.RoundOver = true
+--//Called when a new game is started
+function RoundClass:Destroy()
+    self._Maid:Destroy()
 
+    return true
+end
+
+
+--//Cleans up the current round
+function RoundClass:EndRound()
     self._Maid:DoCleaning()
+
+    self.RoundOver = true
+    self.BaconCollected = false
+    self.PlayersInRound = {}
+
+    return true
 end
 
 
 function RoundClass:StartRound()
+    local winningTeam
+    local otherTeam
+
     --Clone the bacon
     self.Bacon = BaconModel:Clone()
     self.Bacon.Parent = Workspace
     self.Bacon.Position = CenterPosition + Vector3.new(0, 3, 0)
     self.Bacon.Anchored = true
+    self.Bacon.CanCollide = false
 
     self._Maid:GiveTask(self.Bacon)
 
@@ -67,9 +85,14 @@ function RoundClass:StartRound()
     end
 
     --Countdown for player call
-    for i=3, 1, -1 do
-        print(i)
+    for i=5, 1, -1 do
+        ReplicatedStorage.GameState.Value = "Calling number!"
+        ReplicatedStorage.Timer.Value = i
+
+        wait(1)
     end
+
+    ReplicatedStorage.GameState.Value = "In-Round"
 
     --Call random number, if number has already been called, continue creating random numbers until a non-called number has been called
     local RandomObject = Random.new(tick())
@@ -99,42 +122,53 @@ function RoundClass:StartRound()
         local player = Players:GetPlayerFromCharacter(character)
         if (not player) then return end
         if (not table.find(self.RawPlayers, player) or not table.find(self.PlayersInRound, player)) then return end
+
+        --Debounce
+        if (self.BaconCollected) then return end
         
         local playerTable = self.Players[player]
+        self.BaconCollected = true
 
         print(player.Name, "has collected the bacon!")
 
         --Position bacon on head of player
-        self.Bacon.Position = character.PriamryPart.CFrame + Vector3.new(0, 3, 0)
+        self.Bacon.CFrame = character.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
 
         --Weld bacon to player
         self.Weld = Instance.new("WeldConstraint")
+        self.Weld.Parent = self.Bacon
         self.Weld.Part0 = self.Bacon
         self.Weld.Part1 = character.PrimaryPart
+        self.Bacon.Anchored = false
+        self._Maid:GiveTask(self.Weld)
 
         self._Maid:GiveTask(RunSevice.Stepped:Connect(function()
             local currentPosition = character.PrimaryPart.Position
 
             --If player returns to their "home", they win
-            if ((currentPosition - playerTable.IdlePosition).magnitude <= 5) then
+            if ((currentPosition - playerTable.IdlePosition.Position).magnitude <= 10) then
+                winningTeam = playerTable.Team
+
                 print(player.Name, "has won the round!")
 
                 self:EndRound()
             end
         end))
 
-        self._Maid:GiveTask(character:FindFirstHumanoidOfClass("Humanoid").Touched:Connect(function(hitPart, hitPosition)
+        self._Maid:GiveTask(character.Humanoid.Touched:Connect(function(hitPart, hitPosition)
             local otherCharacter = hitPart:FindFirstAncestorOfClass("Model")
             if (not character) then return end
     
-            local otherPlayer = Players:GetPlayerFromCharacter(character)
-            if (not player) then return end
+            local otherPlayer = Players:GetPlayerFromCharacter(otherCharacter)
+            if (not otherPlayer) then return end
+            if (otherPlayer == player) then return end
             
             print(otherPlayer.Name, "has tagged", player.Name)
 
             --Kill player with Bacon
-            character:FindFirstHumanoidOfClass("Humanoid").Health = 0
-            
+            character.Humanoid.Health = 0
+            otherTeam = self.Players[otherPlayer].Team
+
             --End round
             self:EndRound()
         end))
@@ -143,13 +177,14 @@ function RoundClass:StartRound()
     print(randomNumber, "has been called!")
 
     local timeElapsed = 0
-
     repeat
+        ReplicatedStorage.Timer.Value = ROUND_TIME - timeElapsed
         wait(1)
 
         timeElapsed = timeElapsed + 1
-        print(60 - timeElapsed, "seconds remaining!")
-    until (timeElapsed >= 60 or self.RoundOver)
+    until (timeElapsed >= ROUND_TIME or self.RoundOver)
+
+    return winningTeam, otherTeam
 end
 
 
@@ -162,9 +197,12 @@ function RoundClass:Initialize()
         table.insert(self[team], player)
 
         local playerTable = {}
-        table.insert(self.Players, playerTable)
+        self.Players[player] = playerTable
+
+        playerTable.Team = team
 
         --Tell player their number
+        SendNumber:FireClient(player, #self[team])
         print(player.Name, "is on", team, "with the number", #self[team])
 
         --Save player and character
@@ -181,10 +219,12 @@ end
 
 --//Called after self:Initialize.  Just to make sure all player are rady
 function RoundClass:RunIntermission()
-    for i=1, 20 do
+    for i=INTERMISSION_TIME, 1, -1 do
+        ReplicatedStorage.Timer.Value = i
+
         wait(1)
 
-        print(20 - i, "seconds of intermission remaining!")
+        print(i, "seconds of intermission remaining!")
     end
 
     return true
@@ -223,6 +263,9 @@ function RoundClass:Init()
 
     --//Classes
     MaidClass = self.Shared.Maid
+
+    --//Locals
+    SendNumber = ReplicatedStorage.GiveNumber
 end
 
 
