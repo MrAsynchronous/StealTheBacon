@@ -171,7 +171,7 @@ function RoundClass:StartRound()
             --Kill player with Bacon
             character.Humanoid.Health = 0
             winningTeam = self.Players[otherPlayer].Team
-            otherTeam = self.Players[player].Team
+            otherTeam = playerTable.Team
 
             --End round
             self:EndRound()

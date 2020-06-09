@@ -16,8 +16,6 @@ local RoundClass
 local Happened
 
 function RoundService:Start()
-    wait(20)
-
     while true do
         local self = RoundClass.new()
         local TeamScores = {
@@ -26,7 +24,9 @@ function RoundService:Start()
         }
 
         ReplicatedStorage.GameState.Value = "Waiting for players"
-
+        ReplicatedStorage.TeamA.Value = 0
+        ReplicatedStorage.TeamB.Value = 0
+        
         repeat
             self:WaitForPlayers()
         until (self:IsReady())
@@ -47,7 +47,7 @@ function RoundService:Start()
             if (not winningTeam and not otherTeam) then
                 Happened:FireAllClients("Draw!")
             elseif (winningTeam and otherTeam) then
-                TeamScores[otherTeam] = TeamScores[otherTeam] + 0.5
+                TeamScores[winningTeam] = TeamScores[winningTeam] + 0.5
 
             --    Happened:FireAllClients(winningTeam .. " has neutralized the " .. otherTeam .. "!")
             elseif (winningTeam and not otherTeam) then
