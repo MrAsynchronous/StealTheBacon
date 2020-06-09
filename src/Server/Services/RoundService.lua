@@ -25,6 +25,13 @@ function RoundService:Start()
         --Intermission to wait for all players to be IsReady
         self:RunIntermission()
 
+        --RoundService
+        repeat
+            self:StartRound()
+        until (self:GameOver())
+
+        self:Destroy()
+        self = nil
     end
 end
 
