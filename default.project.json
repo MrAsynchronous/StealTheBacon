@@ -1,64 +1,58 @@
 {
-  "name": "StealTheBacon",
+  "name": "AeroGameFramework",
   "tree": {
     "$className": "DataModel",
-    "HttpService": {
-      "$className": "HttpService",
-      "$properties": {
-        "HttpEnabled": true
-      }
-    },
-    "Lighting": {
-      "$className": "Lighting",
-      "$properties": {
-        "Outlines": false,
-        "GlobalShadows": true,
-        "Ambient": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "Brightness": 2.0,
-        "Technology": "Voxel"
-      }
-    },
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "Source": {
-        "$path": "src"
+      "Aero": {
+        "$className": "Folder",
+        "Shared": {
+          "$path": "src/Shared"
+        }
       }
     },
-    "SoundService": {
-      "$className": "SoundService",
-      "$properties": {
-        "RespectFilteringEnabled": true
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "Aero": {
+        "$path": "src/_framework/rep_first"
       }
     },
-    "Workspace": {
-      "$className": "Workspace",
-      "$properties": {
-        "FilteringEnabled": true
-      },
-      "Baseplate": {
-        "$className": "Part",
-        "$properties": {
-          "Position": [
-            0.0,
-            -10.0,
-            0.0
-          ],
-          "Color": [
-            0.38823,
-            0.37254,
-            0.38823
-          ],
-          "Anchored": true,
-          "Locked": true,
-          "Size": [
-            512.0,
-            20.0,
-            512.0
-          ]
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Aero": {
+        "$className": "Folder",
+        "Modules": {
+          "$path": "src/Server/Modules"
+        },
+        "Services": {
+          "$path": "src/Server/Services"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Aero": {
+        "$className": "Folder",
+        "Internal": {
+          "$path": "src/_framework/server_internal"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Aero": {
+          "$className": "Folder",
+          "Controllers": {
+            "$path": "src/Client/Controllers"
+          },
+          "Modules": {
+            "$path": "src/Client/Modules"
+          },
+          "Internal": {
+            "$path": "src/_framework/client_internal"
+          }
         }
       }
     }
