@@ -19,6 +19,8 @@ local MaidClass
 --//Locals
 local CenterPosition = Vector3.new(0, 0, 0)
 local BaconModel
+
+local NumberPicked
 local SendNumber
 
 local MINIMUM_PLAYERS = 2
@@ -174,7 +176,7 @@ function RoundClass:StartRound()
         end))
     end))
 
-    print(randomNumber, "has been called!")
+    NumberPicked:FireAllClients(randomNumber)
 
     local timeElapsed = 0
     repeat
@@ -202,8 +204,7 @@ function RoundClass:Initialize()
         playerTable.Team = team
 
         --Tell player their number
-        SendNumber:FireClient(player, #self[team])
-        print(player.Name, "is on", team, "with the number", #self[team])
+        SendNumber:FireClient(player, #self[team], team)
 
         --Save player and character
         playerTable.Player = player
@@ -223,8 +224,6 @@ function RoundClass:RunIntermission()
         ReplicatedStorage.Timer.Value = i
 
         wait(1)
-
-        print(i, "seconds of intermission remaining!")
     end
 
     return true
@@ -236,8 +235,6 @@ function RoundClass:WaitForPlayers()
         return true
     else
         wait(1)
-
-        print("Waiting for players!")
     end
 end
 
@@ -265,6 +262,7 @@ function RoundClass:Init()
     MaidClass = self.Shared.Maid
 
     --//Locals
+    NumberPicked = ReplicatedStorage.NumberPicked
     SendNumber = ReplicatedStorage.GiveNumber
 end
 
