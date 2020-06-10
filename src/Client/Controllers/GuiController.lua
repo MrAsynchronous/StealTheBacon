@@ -10,11 +10,9 @@ local GuiController = {}
 --//Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
---//Locals
-local NumberPicked
-local SendNumber
-local Happened
+local RoundService
 
+--//Locals
 local NotificationGui
 local NumberGui
 local PickedGui
@@ -34,7 +32,33 @@ function GuiController:Start()
     PickedGui = CoreGui:WaitForChild("NumberPicked")
     NotificationGui = CoreGui:WaitForChild("Notification")
 
-    Happened.OnClientEvent:Connect(function(eventText)
+    RoundService.TeamWin:Connect(function()
+        local newSound = Instance.new("Sound")
+        newSound.SoundId = "rbxassetid://5153737200"
+        newSound.Parent = self.Player.Character
+        newSound.Ended:Connect(function()
+            newSound:Destroy()
+        end)
+
+        newSound:Play()
+    end)
+
+    RoundService.BaconCollected:Connect(function()
+        print("Event received!")
+
+        local newSound = Instance.new("Sound")
+        newSound.Parent = self.Player
+        newSound.SoundId = "rbxassetid://4612375802"
+        newSound.Ended:Connect(function()
+            newSound:Destroy()
+        end)
+
+        newSound:Play()
+    end)
+
+    RoundService.Notification:Connect(function(eventText)
+        NotificationGui.Sound:Play()
+
         local newNotif = NotificationGui.Template:Clone()
         newNotif.Name = "Notification"
         newNotif.Label.Text = eventText
@@ -55,10 +79,10 @@ function GuiController:Start()
             wait(5)
 
             newNotif:TweenPosition(UDim2.new(1.5, 0, newNotif.Position.Y.Scale, 0), "Out", "Quint", 0.25, true)
-        end)()
+        end)()  
     end)
 
-    NumberPicked.OnClientEvent:Connect(function(number)
+    RoundService.NumberPicked:Connect(function(number)
         if (ourNumber and ourNumber == number) then
             PickedGui.Background.ImageColor3 = Color3.fromRGB(88, 214, 141)
             PickedGui.Title.Text = "You've been picked!"
@@ -80,7 +104,7 @@ function GuiController:Start()
         end)
     end)
 
-    SendNumber.OnClientEvent:Connect(function(number, team)
+    RoundService.NumberGiven:Connect(function(number, team)
         ourNumber = number
 
         NumberGui.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -93,7 +117,7 @@ function GuiController:Start()
             wait(2)
             
             NumberGui:TweenSizeAndPosition(UDim2.new(0.14, 0,0.168, 0), UDim2.new(0.07, 0, 0.5, 0), "Out", "Quint", 0.25, true)
-        end)
+        end)        
     end)
 
     CoreGui.Top.GameState.Text = ReplicatedStorage.GameState.Value
@@ -119,9 +143,8 @@ end
 
 
 function GuiController:Init()
-    Happened = ReplicatedStorage.Happened
-    SendNumber = ReplicatedStorage.GiveNumber
-    NumberPicked = ReplicatedStorage.NumberPicked
+    --//Services
+    RoundService = self.Services.RoundService
 end
 
 

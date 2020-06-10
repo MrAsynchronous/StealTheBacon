@@ -13,9 +13,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RoundClass
 
 --//Locals
-local Happened
 
 function RoundService:Start()
+    wait(10)
+
     while true do
         local self = RoundClass.new()
         local TeamScores = {
@@ -26,6 +27,8 @@ function RoundService:Start()
         ReplicatedStorage.GameState.Value = "Waiting for players"
         ReplicatedStorage.TeamA.Value = 0
         ReplicatedStorage.TeamB.Value = 0
+
+        workspace.Sounds.Intermission:Play()
         
         repeat
             self:WaitForPlayers()
@@ -39,21 +42,19 @@ function RoundService:Start()
         ReplicatedStorage.GameState.Value = "Intermission"
         self:RunIntermission()
 
-        --RoundService
+        --Run rounds
+        workspace.Sounds.Intermission:Stop()
+        workspace.Sounds.Ingame:Play()
         repeat
             ReplicatedStorage.GameState.Value = "In-Round"
             local winningTeam, otherTeam = self:StartRound()
 
             if (not winningTeam and not otherTeam) then
-                Happened:FireAllClients("Draw!")
+                RoundService:FireAllClientsEvent("Notification", "Draw")
             elseif (winningTeam and otherTeam) then
                 TeamScores[winningTeam] = TeamScores[winningTeam] + 0.5
-
-            --    Happened:FireAllClients(winningTeam .. " has neutralized the " .. otherTeam .. "!")
             elseif (winningTeam and not otherTeam) then
                 TeamScores[winningTeam] = TeamScores[winningTeam] + 1
-
-            --    Happened:FireAllClients(winningTeam .. " has won the round!")
             end
 
             ReplicatedStorage.TeamA.Value = TeamScores.TeamA
@@ -64,7 +65,7 @@ function RoundService:Start()
             self:RunIntermission()
         until (self:GameOver())
 
-        Happened:FireAllClients((TeamScores.TeamA > TeamScores.TeamB and "Apples" or "Bananas") .. " has won the game!")
+        RoundService:FireAllClients("Notification", (TeamScores.TeamA > TeamScores.TeamB and "Apples" or "Bananas") .. " has won the game!")
         self:RunIntermission()
 
         self:Destroy()
@@ -80,7 +81,15 @@ function RoundService:Init()
     RoundClass = self.Modules.Classes.RoundClass
 
     --//Locals
-    Happened = ReplicatedStorage.Happened
+    self:RegisterClientEvent("BaconCollected")
+    self:RegisterClientEvent("NumberGiven")
+    self:RegisterClientEvent("NumberPicked")
+    self:RegisterClientEvent("Notification")
+    self:RegisterClientEvent("BaconCooked")
+    self:RegisterClientEvent("BaconBurnt")
+    self:RegisterClientEvent("TeamWin")
+    self:RegisterClientEvent("TeamLoss")
+
 end
 
 

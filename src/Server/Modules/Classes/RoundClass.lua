@@ -13,16 +13,14 @@ local RunSevice = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 
+local RoundService
+
 --//Classes
 local MaidClass
 
 --//Locals
-local CenterPosition = Vector3.new(0, 0, 0)
+local CenterPosition = Vector3.new(-54.5, 54.85, 46.25)
 local BaconModel
-
-local NumberPicked
-local SendNumber
-local Happened
 
 local MINIMUM_PLAYERS = 2
 local ROUND_TIME = 45
@@ -88,6 +86,8 @@ function RoundClass:StartRound()
     end
 
     --Countdown for player call
+    workspace.Sounds.NumberCountdown:Play()
+
     for i=5, 1, -1 do
         ReplicatedStorage.GameState.Value = "Calling number!"
         ReplicatedStorage.Timer.Value = i
@@ -132,7 +132,8 @@ function RoundClass:StartRound()
         local playerTable = self.Players[player]
         self.BaconCollected = true
 
-        Happened:FireAllClients(player.Name .. " has collected the bacon!")
+        RoundService:FireAllClients("Notification", player.Name .. " has collected the bacon!")
+        RoundService:FireClient("BaconCollected", player)
 
         --Position bacon on head of player
         self.Bacon.CFrame = character.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
@@ -152,7 +153,12 @@ function RoundClass:StartRound()
             if ((currentPosition - playerTable.IdlePosition.Position).magnitude <= 10) then
                 winningTeam = playerTable.Team
 
-                Happened:FireAllClients(player.Name .. " has won the round!")
+                RoundService:FireAllClients("Notification", player.Name .. " has cooked the bacon!")
+                
+                --Tell players on the winning team that they won
+                for _, plr in pairs(self[playerTable.Team]) do
+                    RoundService:FireClient("TeamWin", plr)
+                end
 
                 self:EndRound()
             end
@@ -166,7 +172,7 @@ function RoundClass:StartRound()
             if (not otherPlayer) then return end
             if (otherPlayer == player) then return end
             
-            Happened:FireAllClients(otherPlayer.Name .. " tagged " .. player.Name .. "!")
+            RoundService:FireAllClients("Notification", otherPlayer.Name .. " tagged " .. player.Name .. "!")
 
             --Kill player with Bacon
             character.Humanoid.Health = 0
@@ -178,7 +184,7 @@ function RoundClass:StartRound()
         end))
     end))
 
-    NumberPicked:FireAllClients(randomNumber)
+    RoundService:FireAllClients("NumberPicked", randomNumber)
 
     local timeElapsed = 0
     repeat
@@ -206,7 +212,7 @@ function RoundClass:Initialize()
         playerTable.Team = team
 
         --Tell player their number
-        SendNumber:FireClient(player, #self[team], team)
+        RoundService:FireClient("NumberGiven", player, #self[team], team)
 
         --Save player and character
         playerTable.Player = player
@@ -265,14 +271,13 @@ end
 
 function RoundClass:Init()
     --//Services
+    RoundService = self.Services.RoundService
 
     --//Classes
     MaidClass = self.Shared.Maid
 
     --//Locals
-    NumberPicked = ReplicatedStorage.NumberPicked
-    SendNumber = ReplicatedStorage.GiveNumber
-    Happened = ReplicatedStorage.Happened
+
 end
 
 
