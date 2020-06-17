@@ -9,7 +9,7 @@ local GuiController = {}
 
 --//Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
+local TweenService = game:GetService("TweenService")
 local RoundService
 
 --//Locals
@@ -32,6 +32,16 @@ function GuiController:Start()
     PickedGui = CoreGui:WaitForChild("NumberPicked")
     NotificationGui = CoreGui:WaitForChild("Notification")
 
+    RoundService.MyBall:Connect(function(ballPart)
+        local tween = TweenService:Create(
+            ballPart, 
+            TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, 999999999, true),
+            {Color = Color3.fromRGB(241, 196, 15)}
+        )
+
+        tween:Play()
+    end)
+
     RoundService.TeamWin:Connect(function()
         local newSound = Instance.new("Sound")
         newSound.SoundId = "rbxassetid://5153737200"
@@ -44,8 +54,6 @@ function GuiController:Start()
     end)
 
     RoundService.BaconCollected:Connect(function()
-        print("Event received!")
-
         local newSound = Instance.new("Sound")
         newSound.Parent = self.Player
         newSound.SoundId = "rbxassetid://4612375802"

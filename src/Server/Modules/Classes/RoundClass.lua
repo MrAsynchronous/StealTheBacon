@@ -19,7 +19,7 @@ local RoundService
 local MaidClass
 
 --//Locals
-local CenterPosition = Vector3.new(-54.5, 54.85, 46.25)
+local CenterPosition = Workspace:WaitForChild("BaconSpawner").Position
 local BaconModel
 
 local MINIMUM_PLAYERS = 2
@@ -49,6 +49,12 @@ end
 --//Called when a new game is started
 function RoundClass:Destroy()
     self._Maid:Destroy()
+
+    print("Destroying balls")
+
+    for _, playerTable in pairs(self.Players) do
+        playerTable.Part:Destroy()
+    end
 
     return true
 end
@@ -86,7 +92,7 @@ function RoundClass:StartRound()
     end
 
     --Countdown for player call
-    workspace.Sounds.NumberCountdown:Play()
+--    workspace.Sounds.NumberCountdown:Play()
 
     for i=5, 1, -1 do
         ReplicatedStorage.GameState.Value = "Calling number!"
@@ -136,7 +142,7 @@ function RoundClass:StartRound()
         RoundService:FireClient("BaconCollected", player)
 
         --Position bacon on head of player
-        self.Bacon.CFrame = character.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
+        self.Bacon.CFrame = character.PrimaryPart.CFrame + Vector3.new(0, 4, 0)
 
         --Weld bacon to player
         self.Weld = Instance.new("WeldConstraint")
@@ -223,6 +229,20 @@ function RoundClass:Initialize()
             Vector3.new(math.sin(angleBetween * i) * 50, 10, math.cos(angleBetween * i) * 50) + CenterPosition,
             CenterPosition
         )
+
+        --Create Part
+        playerTable.Part = Instance.new("Part")
+        playerTable.Part.Parent = Workspace
+        playerTable.Part.Shape = "Ball"
+        playerTable.Part.Anchored = true
+        playerTable.Part.CanCollide = true
+        playerTable.Part.CFrame = playerTable.IdlePosition - Vector3.new(0, 5, 0)
+        playerTable.Part.Color = Color3.fromRGB(240, 243, 244)
+        playerTable.Part.TopSurface = "SmoothNoOutlines"
+        playerTable.Part.BottomSurface = "SmoothNoOutlines"
+
+        RoundService:FireClient("MyBall", player, playerTable.Part)
+
     end
 end
 
