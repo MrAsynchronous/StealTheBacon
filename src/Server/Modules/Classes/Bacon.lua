@@ -27,7 +27,7 @@ local MaidClass
 function Bacon.new()
     local self = setmetatable({
         Collected = false,
-        Owner = false,
+        Owner = false, 
 
         PlayerCollected = EventClass.new(),
 
@@ -61,11 +61,10 @@ end
 
 function Bacon:Reset()
     self.Model.CFrame = Workspace.MapMiddle.CFrame
-    self._Maid:DoCleaning()
 end
 
 
-function Bacon:Cleanup()
+function Bacon:Destroy()
     self.Model:Destroy()
     self._Maid:Destroy()
 end

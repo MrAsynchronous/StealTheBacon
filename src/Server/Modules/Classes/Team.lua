@@ -10,6 +10,7 @@ Team.__index = Team
 --//Api
 
 --//Services
+local RoundService
 
 --//Classes
 local MaidClass
@@ -34,6 +35,11 @@ function Team.new(teamName)
 end
 
 
+function Team:GetDataForPlayer(player)
+    return self.PlayerData[player]
+end
+
+
 --//Returns the player found at the index Number
 function Team:CallNumber(number)
     return self.Players[number]
@@ -55,10 +61,12 @@ function Team:AddPlayer(player, spawnPosition)
     table.insert(self.Players, player)
 
     self.PlayerData[player] = {
-        IsReady = (player.Character or false),
-        Number = #self.Players + 1,
+        IsReady = (player.Character and true or false),
+        Number = #self.Players,
         SpawnPosition = spawnPosition
     }
+
+    RoundService:FireClient("NumberGiven", player, self.PlayerData[player].Number, self.Name)
 
     self._Maid:GiveTask(player.CharacterAdded:Connect(function()
         wait(1)
@@ -80,12 +88,14 @@ function Team:IsReady()
         teamReady = teamReady and self.PlayerData[player].IsReady
     end
 
+    print(self.Name, teamReady)
+
     return teamReady
 end
 
 
 --//Returns true if player is in team, returns false otherwise
-function Team:PlayerInTeam(player)
+function Team:FindPlayer(player)
     return (table.find(self.Players, player) == nil and false or true)
 end
 
@@ -94,6 +104,7 @@ function Team:Init()
     --//Api
     
     --//Services
+    RoundService = self.Services.RoundService
     
     --//Classes
     MaidClass = self.Shared.Maid
