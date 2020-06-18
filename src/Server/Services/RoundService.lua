@@ -6,89 +6,76 @@
 
 local RoundService = {Client = {}}
 
+
+--//Api
+
 --//Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 --//Classes
 local RoundClass
 
+--//Controllers
+
 --//Locals
+local CurrentRound
+local GameState
+
 
 function RoundService:Start()
-    ReplicatedStorage.StartRound.Event:Connect(function()
-        while true do
-            local self = RoundClass.new()
-            local TeamScores = {
-                TeamA = 0,
-                TeamB = 0
-            }
+    while true do
+        local self = RoundClass.new()
+        CurrentRound = self
+
+        GameState.Value = "Waiting for Players"
     
-            RoundService:FireAllClients("Notification", "Waiting for players.")
-    
-            ReplicatedStorage.GameState.Value = "Waiting for players"
-            ReplicatedStorage.TeamA.Value = 0
-            ReplicatedStorage.TeamB.Value = 0
-    
-            workspace.Sounds.Intermission:Play()
-            
-            repeat
-                self:WaitForPlayers()
-    
-                ReplicatedStorage.Timer.Value += 1
-            until (self:IsReady())
-    
-            RoundService:FireAllClients("Notification", "A new game is starting!")
-    
-            --Initialize game
-            ReplicatedStorage.GameState.Value = "Initializing"
-            self:Initialize()
-            
-            --Intermission to wait for all players to be IsReady
-            ReplicatedStorage.GameState.Value = "Intermission"
-            self:RunIntermission()
-    
-            --Run rounds
-            workspace.Sounds.Intermission:Stop()
-            workspace.Sounds.Ingame:Play()
-            repeat
-                ReplicatedStorage.GameState.Value = "In-Round"
-                local winningTeam, otherTeam = self:StartRound()
-    
-                if (not winningTeam and not otherTeam) then
-                    RoundService:FireAllClientsEvent("Notification", "Draw")
-                elseif (winningTeam and otherTeam) then
-                    TeamScores[winningTeam] = TeamScores[winningTeam] + 0.5
-                elseif (winningTeam and not otherTeam) then
-                    TeamScores[winningTeam] = TeamScores[winningTeam] + 1
-                end
-    
-                ReplicatedStorage.TeamA.Value = TeamScores.TeamA
-                ReplicatedStorage.TeamB.Value = TeamScores.TeamB
-    
-                ReplicatedStorage.GameState.Value = "Intermission"
-    
-                self:RunIntermission()
-            until (self:GameOver())
-    
-            workspace.Sounds.Ingame:Stop()
-    
-            RoundService:FireAllClients("Notification", (TeamScores.TeamA > TeamScores.TeamB and "Apples" or "Bananas") .. " has won the game!")
-            self:RunIntermission()
-    
-            self:Destroy()
-            self = nil
-        end       
-    end)
+        --//Wait for proper player count
+        repeat
+            wait()
+        until self:IsReady()
+
+        RoundService:FireAllClients("Notification", "A new game is starting!")
+        GameState.Value = "Game is Setting Up"
+
+        --//Initialize the round
+        self:Initialize()
+
+        GameState.Value = "Game is starting!"
+
+        --//Continue with rounds until all numbers have been called
+        repeat
+            GameState.Value = "Round is setting up!"
+
+            self:SetupRound()
+
+            GameState.Value = "In-Round"
+
+            self:StartRound()
+
+            GameState.Value = "Round cleanup"
+        until self:GameOver()
+
+        GameState.Value = "In-Round"
+
+        self:Destroy()
+    end
 end
 
 
 function RoundService:Init()
+    --//Api
+    
     --//Services
-
+    
     --//Classes
-    RoundClass = self.Modules.Classes.RoundClass
+    RoundClass = self.Modules.Classes.Round
 
+    --//Controllers
+    
     --//Locals
+    GameState = ReplicatedStorage.GameInfo:WaitForChild("GameState")
+    
     self:RegisterClientEvent("MyBall")
     self:RegisterClientEvent("BaconCollected")
     self:RegisterClientEvent("NumberGiven")
@@ -98,7 +85,6 @@ function RoundService:Init()
     self:RegisterClientEvent("BaconBurnt")
     self:RegisterClientEvent("TeamWin")
     self:RegisterClientEvent("TeamLoss")
-
 end
 
 
