@@ -61,8 +61,6 @@ end
 
 
 function Round:StartRound()
-    repeat wait() until (self.TeamA:IsReady() and self.TeamB:IsReady())
-
     --Freezed teams
     self.TeamA:Freeze()
     self.TeamB:Freeze()
@@ -243,6 +241,8 @@ end
 --//Fully removes all remnents of this round
 --//Called when the game is over
 function Round:Destroy()
+    self.IsOver = true
+
     local winningTeam = (ReplicatedStorage.GameInfo.Apples.Value > ReplicatedStorage.GameInfo.Bananas.Value and self.TeamA or self.TeamB)
     if (not winningTeam) then
         RoundService:FireAllClients("Notification", "Game Tie!")
@@ -275,7 +275,7 @@ end
 
 
 function Round:GameOver()
-    return #self.NumbersToCall == 0
+    return #self.NumbersToCall == 0 or self.IsOver
 end
 
 

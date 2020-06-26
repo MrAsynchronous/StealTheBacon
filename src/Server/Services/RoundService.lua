@@ -24,6 +24,12 @@ local GameState
 
 
 function RoundService:Start()
+    ReplicatedStorage.Reset.Event:Connect(function()
+        if (CurrentRound) then
+            CurrentRound:Destroy( )
+        end
+    end)
+
     while true do
         local self = RoundClass.new()
         CurrentRound = self
